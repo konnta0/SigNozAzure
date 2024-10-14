@@ -15,6 +15,7 @@ builder.Services.AddSwaggerGen();
 
 const string serviceName = "SampleWebApp";
 const string serviceVersion = "1.0.0";
+var otlpEndpoint = new Uri("20.40.96.181:4317");
 
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(
@@ -22,16 +23,33 @@ builder.Services.AddOpenTelemetry()
         serviceVersion: serviceVersion))
     .WithTracing(tracing => tracing
         .AddSource(serviceName)
-        .AddAspNetCoreInstrumentation()
-        .AddConsoleExporter())
+        .AddAspNetCoreInstrumentation(options =>
+        {
+            options.RecordException = true;
+        })
+        .AddHttpClientInstrumentation()
+        .AddConsoleExporter()
+        .AddOtlpExporter(options =>
+        {
+            options.Endpoint = otlpEndpoint;
+        })
+    )
     .WithMetrics(metrics => metrics
         .AddMeter(serviceName)
+        .AddOtlpExporter(options =>
+            {
+                options.Endpoint = otlpEndpoint;
+            })
         .AddConsoleExporter());
 
 builder.Logging.AddOpenTelemetry(options => options
     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
         serviceName: serviceName,
         serviceVersion: serviceVersion))
+    .AddOtlpExporter(options =>
+    {
+        options.Endpoint = otlpEndpoint;
+    })
     .AddConsoleExporter());
 
 builder.Services.AddSingleton<Instrumentation>();
