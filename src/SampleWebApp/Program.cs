@@ -15,7 +15,7 @@ builder.Services.AddSwaggerGen();
 
 const string serviceName = "SampleWebApp";
 const string serviceVersion = "1.0.0";
-var otlpEndpoint = new Uri("20.40.96.181:4317");
+var otlpEndpoint = new Uri("http://20.40.96.181:4317");
 
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(
