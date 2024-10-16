@@ -15,13 +15,13 @@ public class WeatherForecastController(ILogger<WeatherForecastController> logger
     };
 
     private readonly ActivitySource _activitySource = instrumentation.ActivitySource;
-    private readonly Counter<int> _counter = new Meter("WeatherForecastController").CreateCounter<int>("call_count", description: "The number of times the controller is called");
+    private static readonly Counter<int> Counter = new Meter("WeatherForecastController").CreateCounter<int>("get-weather-call-count", description: "The number of times the controller is called");
 
     [HttpGet(Name = "GetWeatherForecast")]
     public async ValueTask<IEnumerable<WeatherForecast>> Get()
     {
         logger.LogInformation("GetWeatherForecast called");
-        _counter.Add(1);
+        Counter.Add(1);
 
 
         var results = new List<WeatherForecast>();
