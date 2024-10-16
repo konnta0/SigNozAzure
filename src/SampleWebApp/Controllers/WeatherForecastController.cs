@@ -18,29 +18,38 @@ public class WeatherForecastController(ILogger<WeatherForecastController> logger
     private readonly Counter<int> _counter = new Meter("WeatherForecastController").CreateCounter<int>("call_count", description: "The number of times the controller is called");
 
     [HttpGet(Name = "GetWeatherForecast")]
-    public IEnumerable<WeatherForecast> Get()
+    public async ValueTask<IEnumerable<WeatherForecast>> Get()
     {
         logger.LogInformation("GetWeatherForecast called");
         _counter.Add(1);
-        const string activityName = "GetWeatherForecast";
-        return Enumerable.Range(1, 5).Select(index =>
+
+
+        var results = new List<WeatherForecast>();
+        const string activityName = "Iteration";
+        for (var i = 0; i < 5; i++)
+        {
+            using var activity = _activitySource.StartActivity(activityName,
+                ActivityKind.Server,
+                Activity.Current?.Context ?? default(ActivityContext)
+            );
+            await Task.Delay(TimeSpan.FromMilliseconds(i * 100));
+
+            activity?.SetTag("iteration", i);
+            
+            var date = DateOnly.FromDateTime(DateTime.Now.AddDays(i));
+            activity?.SetTag("date", date);
+
+            var temperatureC = Random.Shared.Next(-20, 55);
+            activity?.SetTag("temperatureC", temperatureC);
+
+            results.Add(new WeatherForecast
             {
-                using var activity = _activitySource.StartActivity(activityName,
-                    ActivityKind.Server,
-                    Activity.Current?.Context ?? default(ActivityContext)
-                );
-                activity?.SetTag("iteration", index);
-                var date = DateOnly.FromDateTime(DateTime.Now.AddDays(index));
-                activity?.SetTag("date", date);
-                var temperatureC = Random.Shared.Next(-20, 55);
-                activity?.SetTag("temperatureC", temperatureC);
-                return new WeatherForecast
-                {
-                    Date = date,
-                    TemperatureC = temperatureC,
-                    Summary = Summaries[Random.Shared.Next(Summaries.Length)]
-                };
-            })
-            .ToArray();
+                Date = date,
+                TemperatureC = temperatureC,
+                Summary = Summaries[Random.Shared.Next(Summaries.Length)]
+            });
+        }
+
+        return results;
     }
 }
