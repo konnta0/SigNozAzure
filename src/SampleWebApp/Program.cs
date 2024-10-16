@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -21,36 +22,38 @@ builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(
         serviceName: serviceName,
         serviceVersion: serviceVersion))
-    .WithTracing(tracing => tracing
-        .AddSource(serviceName)
-        .AddAspNetCoreInstrumentation(options =>
-        {
-            options.RecordException = true;
-        })
-        .AddHttpClientInstrumentation()
-        .AddConsoleExporter()
-        .AddOtlpExporter(options =>
-        {
-            options.Endpoint = otlpEndpoint;
-        })
-    )
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddSource(serviceName)
+            .AddAspNetCoreInstrumentation(options => { options.RecordException = true; })
+            .AddHttpClientInstrumentation()
+            .AddConsoleExporter()
+            .AddOtlpExporter(options => { options.Endpoint = otlpEndpoint; });
+        tracing.AddSource(Instrumentation.ActivitySourceName);
+        tracing.AddInstrumentation(new Instrumentation());
+    })
     .WithMetrics(metrics => metrics
         .AddMeter(serviceName)
+        .AddMeter("WeatherForecastController")
         .AddOtlpExporter(options =>
             {
                 options.Endpoint = otlpEndpoint;
             })
         .AddConsoleExporter());
 
-builder.Logging.AddOpenTelemetry(options => options
-    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
-        serviceName: serviceName,
-        serviceVersion: serviceVersion))
-    .AddOtlpExporter(options =>
-    {
-        options.Endpoint = otlpEndpoint;
-    })
-    .AddConsoleExporter());
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options
+        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
+            serviceName: serviceName,
+            serviceVersion: serviceVersion))
+        .AddOtlpExporter(options => { options.Endpoint = otlpEndpoint; })
+        .AddConsoleExporter();
+    options.IncludeScopes = true;
+    options.ParseStateValues = true;
+    options.IncludeFormattedMessage = true;
+});
 
 builder.Services.AddSingleton<Instrumentation>();
 
