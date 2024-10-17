@@ -6,7 +6,7 @@ namespace SampleWebApp.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class WeatherForecastController(ILogger<WeatherForecastController> logger, Instrumentation instrumentation)
+public class WeatherForecastController(ILogger<WeatherForecastController> logger, Instrumentation instrumentation, ApplicationMetrics applicationMetrics)
     : ControllerBase
 {
     private static readonly string[] Summaries = new[]
@@ -15,7 +15,7 @@ public class WeatherForecastController(ILogger<WeatherForecastController> logger
     };
 
     private readonly ActivitySource _activitySource = instrumentation.ActivitySource;
-    private readonly Counter<int> Counter = instrumentation.CallCounter;
+    private readonly Counter<int> Counter = applicationMetrics.CallCounter;
 
     [HttpGet(Name = "GetWeatherForecast")]
     public async ValueTask<IEnumerable<WeatherForecast>> Get()

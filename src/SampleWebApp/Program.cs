@@ -56,6 +56,7 @@ builder.Logging.AddOpenTelemetry(options =>
 });
 
 builder.Services.AddSingleton<Instrumentation>();
+builder.Services.AddSingleton<ApplicationMetrics>();
 
 
 var app = builder.Build();
