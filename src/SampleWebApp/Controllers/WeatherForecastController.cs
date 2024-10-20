@@ -51,4 +51,64 @@ public class WeatherForecastController(ILogger<WeatherForecastController> logger
 
         return results;
     }
+    
+    [HttpPost(Name = "Force4xxError")]
+    public IActionResult Post()
+    {
+        logger.LogWarning("Force4xxError called");
+        
+        var statusCodes = new[]
+        {
+            StatusCodes.Status400BadRequest,
+            StatusCodes.Status401Unauthorized,
+            StatusCodes.Status403Forbidden,
+            StatusCodes.Status404NotFound,
+            StatusCodes.Status405MethodNotAllowed,
+            StatusCodes.Status406NotAcceptable,
+            StatusCodes.Status407ProxyAuthenticationRequired,
+            StatusCodes.Status408RequestTimeout,
+            StatusCodes.Status409Conflict,
+            StatusCodes.Status410Gone,
+            StatusCodes.Status411LengthRequired,
+            StatusCodes.Status412PreconditionFailed,
+            StatusCodes.Status413PayloadTooLarge,
+            StatusCodes.Status414UriTooLong,
+            StatusCodes.Status415UnsupportedMediaType,
+            StatusCodes.Status416RangeNotSatisfiable,
+            StatusCodes.Status417ExpectationFailed,
+            StatusCodes.Status418ImATeapot,
+            StatusCodes.Status421MisdirectedRequest,
+            StatusCodes.Status422UnprocessableEntity,
+            StatusCodes.Status423Locked,
+            StatusCodes.Status424FailedDependency,
+            StatusCodes.Status426UpgradeRequired,
+            StatusCodes.Status428PreconditionRequired,
+            StatusCodes.Status429TooManyRequests,
+            StatusCodes.Status431RequestHeaderFieldsTooLarge,
+            StatusCodes.Status451UnavailableForLegalReasons,
+        };
+        return new StatusCodeResult(statusCodes[Random.Shared.Next(statusCodes.Length)]);
+    }
+
+    [HttpDelete(Name = "Force5xxError")]
+    public IActionResult Delete()
+    {
+        logger.LogError("Force5xxError called");
+        
+        var statusCodes = new[]
+        {
+            StatusCodes.Status500InternalServerError,
+            StatusCodes.Status501NotImplemented,
+            StatusCodes.Status502BadGateway,
+            StatusCodes.Status503ServiceUnavailable,
+            StatusCodes.Status504GatewayTimeout,
+            StatusCodes.Status505HttpVersionNotsupported,
+            StatusCodes.Status506VariantAlsoNegotiates,
+            StatusCodes.Status507InsufficientStorage,
+            StatusCodes.Status508LoopDetected,
+            StatusCodes.Status510NotExtended,
+            StatusCodes.Status511NetworkAuthenticationRequired,
+        };
+        return new StatusCodeResult(statusCodes[Random.Shared.Next(statusCodes.Length)]);
+    }
 }
