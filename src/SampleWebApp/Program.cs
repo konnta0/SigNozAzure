@@ -19,9 +19,17 @@ const string serviceVersion = "1.0.0";
 var otlpEndpoint = new Uri("http://20.40.96.181:4317");
 
 builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource.AddService(
-        serviceName: serviceName,
-        serviceVersion: serviceVersion))
+    .ConfigureResource(resource =>
+    {
+        resource.AddAttributes(
+            new[]
+            {
+                new KeyValuePair<string, object>("service.environment", "example"),
+            });
+        resource.AddService(
+            serviceName: serviceName,
+            serviceVersion: serviceVersion);
+    })
     .WithTracing(tracing =>
     {
         tracing
@@ -40,20 +48,21 @@ builder.Services.AddOpenTelemetry()
             {
                 options.Endpoint = otlpEndpoint;
             })
-        .AddConsoleExporter());
-
-builder.Logging.AddOpenTelemetry(options =>
-{
-    options
-        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(
-            serviceName: serviceName,
-            serviceVersion: serviceVersion))
-        .AddOtlpExporter(options => { options.Endpoint = otlpEndpoint; })
-        .AddConsoleExporter();
-    options.IncludeScopes = true;
-    options.ParseStateValues = true;
-    options.IncludeFormattedMessage = true;
-});
+        .AddConsoleExporter())
+    .WithLogging(logging =>
+    {
+        logging.AddConsoleExporter();
+        logging.AddOtlpExporter(options =>
+        {
+            options.Endpoint = otlpEndpoint;
+        });
+    }, 
+        options =>
+    {
+        options.IncludeScopes = true;
+        options.ParseStateValues = true;
+        options.IncludeFormattedMessage = true;
+    });
 
 builder.Services.AddSingleton<Instrumentation>();
 builder.Services.AddSingleton<ApplicationMetrics>();
