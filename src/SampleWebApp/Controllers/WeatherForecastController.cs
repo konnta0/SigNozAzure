@@ -6,7 +6,12 @@ namespace SampleWebApp.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-public class WeatherForecastController(ILogger<WeatherForecastController> logger, Instrumentation instrumentation, ApplicationMetrics applicationMetrics)
+public class WeatherForecastController(
+    ILogger<WeatherForecastController> logger, 
+    Instrumentation instrumentation, 
+    ApplicationMetrics applicationMetrics,
+    IHttpClientFactory httpClientFactory
+    )
     : ControllerBase
 {
     private static readonly string[] Summaries = new[]
@@ -22,6 +27,8 @@ public class WeatherForecastController(ILogger<WeatherForecastController> logger
     {
         logger.LogInformation("GetWeatherForecast called");
         Counter.Add(1);
+
+        using var client = httpClientFactory.CreateClient();
 
         var results = new List<WeatherForecast>();
         const string activityName = "Iteration";
@@ -47,6 +54,8 @@ public class WeatherForecastController(ILogger<WeatherForecastController> logger
                 TemperatureC = temperatureC,
                 Summary = Summaries[Random.Shared.Next(Summaries.Length)]
             });
+
+            _ = await client.GetAsync("https://www.bing.com");
         }
 
         return results;

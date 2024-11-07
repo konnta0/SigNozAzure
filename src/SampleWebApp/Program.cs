@@ -66,6 +66,7 @@ builder.Services.AddOpenTelemetry()
 
 builder.Services.AddSingleton<Instrumentation>();
 builder.Services.AddSingleton<ApplicationMetrics>();
+builder.Services.AddHttpClient();
 
 
 var app = builder.Build();
