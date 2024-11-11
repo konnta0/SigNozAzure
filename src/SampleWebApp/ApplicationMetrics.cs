@@ -13,7 +13,6 @@ public sealed class ApplicationMetrics
         _meter = new Meter(nameof(ApplicationMetrics));
         CallCounter = _meter.CreateCounter<int>(nameof(CallCounter), description: "This is demo");
         
-        _meter = new Meter(nameof(Instrumentation));
         _meter.CreateObservableCounter("thread_cpu_time", () => GetThreadCpuTime(Process.GetCurrentProcess()));
         CallCounter = _meter.CreateCounter<int>("get_weather_call_count", description: "This is demo");
     }

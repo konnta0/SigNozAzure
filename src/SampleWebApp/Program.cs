@@ -42,8 +42,9 @@ builder.Services.AddOpenTelemetry()
         tracing.AddInstrumentation(new Instrumentation());
     })
     .WithMetrics(metrics => metrics
-        .AddMeter(serviceName)
-        .AddMeter("WeatherForecastController")
+        .AddMeter(nameof(ApplicationMetrics))
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
         .AddOtlpExporter(options =>
             {
                 options.Endpoint = otlpEndpoint;
