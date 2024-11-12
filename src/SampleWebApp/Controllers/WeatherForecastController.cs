@@ -26,7 +26,11 @@ public class WeatherForecastController(
     public async ValueTask<IEnumerable<WeatherForecast>> Get()
     {
         logger.LogInformation("GetWeatherForecast called");
-        Counter.Add(1);
+        Counter.Add(1, new KeyValuePair<string, object?>[]
+        {
+            new("controller", "WeatherForecast"),
+            new("action", "Get"),
+        });
 
         using var client = httpClientFactory.CreateClient();
 
