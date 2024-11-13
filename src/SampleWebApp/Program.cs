@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -69,6 +70,7 @@ builder.Services.AddSingleton<Instrumentation>();
 builder.Services.AddSingleton<ApplicationMetrics>();
 builder.Services.AddHttpClient();
 
+builder.Services.AddDbContext<ExampleDbContext>(static x => x.UseSqlServer());
 
 var app = builder.Build();
 
