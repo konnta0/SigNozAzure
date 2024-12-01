@@ -1,6 +1,9 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using CloudStructures;
+using CloudStructures.Structures;
 using Microsoft.AspNetCore.Mvc;
+using StackExchange.Redis;
 
 namespace SampleWebApp.Controllers;
 
@@ -10,7 +13,8 @@ public class WeatherForecastController(
     ILogger<WeatherForecastController> logger, 
     Instrumentation instrumentation, 
     ApplicationMetrics applicationMetrics,
-    IHttpClientFactory httpClientFactory
+    IHttpClientFactory httpClientFactory,
+    RedisConnection redisConnection
     )
     : ControllerBase
 {
@@ -20,13 +24,13 @@ public class WeatherForecastController(
     };
 
     private readonly ActivitySource _activitySource = instrumentation.ActivitySource;
-    private readonly Counter<int> Counter = applicationMetrics.CallCounter;
+    private readonly Counter<int> _counter = applicationMetrics.CallCounter;
 
     [HttpGet(Name = "GetWeatherForecast")]
     public async ValueTask<IEnumerable<WeatherForecast>> Get()
     {
         logger.LogInformation("GetWeatherForecast called");
-        Counter.Add(1, new KeyValuePair<string, object?>[]
+        _counter.Add(1, new KeyValuePair<string, object?>[]
         {
             new("controller", "WeatherForecast"),
             new("action", "Get"),
@@ -123,5 +127,39 @@ public class WeatherForecastController(
             StatusCodes.Status511NetworkAuthenticationRequired,
         };
         return new StatusCodeResult(statusCodes[Random.Shared.Next(statusCodes.Length)]);
+    }
+
+    [HttpGet("redis", Name = "RedisGet")]
+    public async ValueTask<IActionResult> RedisGetAsync([FromRoute]string key = "example")
+    {
+        logger.LogInformation("RedisGet called");
+        var redisString = new RedisString<string>(redisConnection, key, null);
+        var value = await redisString.GetAsync();
+        
+        if (value.HasValue)
+        {
+            return Ok(value.Value);
+        }
+
+        return NotFound();
+    }
+
+    
+    [HttpPost("redis", Name = "RedisPost")]
+    public async ValueTask<IActionResult> RedisSetAsync([FromRoute]string key = "example", [FromBody] string value = "example")
+    {
+        logger.LogInformation("RedisSet called");
+        var redisString = new RedisString<string>(redisConnection, key, null);
+        await redisString.SetAsync(value);
+        return NoContent();
+    }
+    
+    [HttpDelete("redis", Name = "RedisDelete")]
+    public async ValueTask<IActionResult> RedisDeleteAsync([FromRoute]string key = "example")
+    {
+        logger.LogInformation("RedisDelete called");
+        var redisString = new RedisString<string>(redisConnection, key, null);
+        await redisString.DeleteAsync();
+        return NoContent();
     }
 }

@@ -1,10 +1,13 @@
-using System.Diagnostics;
+using System.Net;
+using CloudStructures;
+using Microsoft.AspNetCore.Connections;
 using Microsoft.EntityFrameworkCore;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using SampleWebApp;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -68,6 +71,19 @@ builder.Services.AddOpenTelemetry()
 
 builder.Services.AddSingleton<Instrumentation>();
 builder.Services.AddSingleton<ApplicationMetrics>();
+builder.Services.AddSingleton(() =>
+{
+    var connection = new RedisConnection(new RedisConfig("default", new ConfigurationOptions
+    {
+        EndPoints = new EndPointCollection(new List<EndPoint>
+        {
+            new UriEndPoint(new Uri(""))
+        }),
+        AbortOnConnectFail = false,
+        Ssl = true
+    }));
+    return connection;
+});
 builder.Services.AddHttpClient();
 
 builder.Services.AddDbContext<ExampleDbContext>(static x => x.UseSqlServer());
