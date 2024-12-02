@@ -26,10 +26,9 @@ builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource =>
     {
         resource.AddAttributes(
-            new[]
-            {
-                new KeyValuePair<string, object>("service.environment", "example"),
-            });
+        [
+            new KeyValuePair<string, object>("service.environment", "example")
+        ]);
         resource.AddService(
             serviceName: serviceName,
             serviceVersion: serviceVersion);
@@ -77,7 +76,7 @@ builder.Services.AddSingleton(() =>
     {
         EndPoints = new EndPointCollection(new List<EndPoint>
         {
-            new UriEndPoint(new Uri(""))
+            new UriEndPoint(new Uri("signoz-azure.redis.cache.windows.net"))
         }),
         AbortOnConnectFail = false,
         Ssl = true
