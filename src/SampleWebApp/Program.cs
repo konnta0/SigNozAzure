@@ -72,6 +72,7 @@ builder.Services.AddSingleton<Instrumentation>();
 builder.Services.AddSingleton<ApplicationMetrics>();
 builder.Services.AddSingleton(() =>
 {
+    var pass = Environment.GetEnvironmentVariable("CACHE_PASS_WORD");
     var connection = new RedisConnection(new RedisConfig("default", new ConfigurationOptions
     {
         EndPoints = new EndPointCollection(new List<EndPoint>
@@ -79,6 +80,7 @@ builder.Services.AddSingleton(() =>
             new UriEndPoint(new Uri("signoz-azure.redis.cache.windows.net"))
         }),
         AbortOnConnectFail = false,
+        Password = pass,
         Ssl = true
     }));
     return connection;
