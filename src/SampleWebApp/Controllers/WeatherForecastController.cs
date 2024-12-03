@@ -134,16 +134,14 @@ public class WeatherForecastController(
     {
         logger.LogInformation("RedisGet called");
         var pass = Environment.GetEnvironmentVariable("CACHE_PASS_WORD");
-        var redisConnection = new RedisConnection(new RedisConfig("default", new ConfigurationOptions
-        {
-            EndPoints = new EndPointCollection(new List<EndPoint>
-            {
-                new DnsEndPoint("signoz-azure.redis.cache.windows.net", 6379)
-            }),
-            AbortOnConnectFail = false,
-            Password = pass,
-            Ssl = true,
-        }));
+
+        var options = new ConfigurationOptions();
+        options.EndPoints.Add("signoz-azure.redis.cache.windows.net", 6380);
+        options.Password = pass;
+        options.Ssl = true;
+        options.AbortOnConnectFail = false;
+        
+        var redisConnection = new RedisConnection(new RedisConfig("default", options));
         
         
         var redisString = new RedisString<string>(redisConnection, key, null);
