@@ -2,6 +2,7 @@ using System.Net;
 using CloudStructures;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -70,7 +71,7 @@ builder.Services.AddOpenTelemetry()
 
 builder.Services.AddSingleton<Instrumentation>();
 builder.Services.AddSingleton<ApplicationMetrics>();
-builder.Services.AddSingleton(() =>
+builder.Services.AddScoped<RedisConnection>(_ =>
 {
     var pass = Environment.GetEnvironmentVariable("CACHE_PASS_WORD");
     var connection = new RedisConnection(new RedisConfig("default", new ConfigurationOptions
