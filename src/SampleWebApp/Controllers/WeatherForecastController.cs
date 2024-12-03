@@ -1,11 +1,8 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Net;
 using CloudStructures;
 using CloudStructures.Structures;
-using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Mvc;
-using StackExchange.Redis;
 
 namespace SampleWebApp.Controllers;
 
@@ -15,7 +12,8 @@ public class WeatherForecastController(
     ILogger<WeatherForecastController> logger, 
     Instrumentation instrumentation, 
     ApplicationMetrics applicationMetrics,
-    IHttpClientFactory httpClientFactory)
+    IHttpClientFactory httpClientFactory,
+    RedisConnection redisConnection)
     : ControllerBase
 {
     private static readonly string[] Summaries = new[]
@@ -133,20 +131,6 @@ public class WeatherForecastController(
     public async ValueTask<IActionResult> RedisGetAsync([FromRoute]string key = "example")
     {
         logger.LogInformation("RedisGet called");
-        var pass = Environment.GetEnvironmentVariable("CACHE_PASS_WORD");
-        
-        var redisConnection = new RedisConnection(new RedisConfig("default", new ConfigurationOptions
-        {
-            Password = pass,
-            Ssl = true,
-            AbortOnConnectFail = false,
-            EndPoints = new EndPointCollection
-            {
-                {"signoz-azure.redis.cache.windows.net", 6380}
-            }
-        }));
-        
-        
         var redisString = new RedisString<string>(redisConnection, key, null);
         var value = await redisString.GetAsync();
         
@@ -158,22 +142,21 @@ public class WeatherForecastController(
         return NotFound();
     }
 
+    [HttpPost("redis", Name = "RedisPost")]
+    public async ValueTask<IActionResult> RedisSetAsync([FromRoute]string key = "example", [FromBody] string value = "example")
+    {
+        logger.LogInformation("RedisSet called");
+        var redisString = new RedisString<string>(redisConnection, key, null);
+        await redisString.SetAsync(value);
+        return NoContent();
+    }
     
-    // [HttpPost("redis", Name = "RedisPost")]
-    // public async ValueTask<IActionResult> RedisSetAsync([FromRoute]string key = "example", [FromBody] string value = "example")
-    // {
-    //     logger.LogInformation("RedisSet called");
-    //     var redisString = new RedisString<string>(redisConnection, key, null);
-    //     await redisString.SetAsync(value);
-    //     return NoContent();
-    // }
-    //
-    // [HttpDelete("redis", Name = "RedisDelete")]
-    // public async ValueTask<IActionResult> RedisDeleteAsync([FromRoute]string key = "example")
-    // {
-    //     logger.LogInformation("RedisDelete called");
-    //     var redisString = new RedisString<string>(redisConnection, key, null);
-    //     await redisString.DeleteAsync();
-    //     return NoContent();
-    // }
+    [HttpDelete("redis", Name = "RedisDelete")]
+    public async ValueTask<IActionResult> RedisDeleteAsync([FromRoute]string key = "example")
+    {
+        logger.LogInformation("RedisDelete called");
+        var redisString = new RedisString<string>(redisConnection, key, null);
+        await redisString.DeleteAsync();
+        return NoContent();
+    }
 }
