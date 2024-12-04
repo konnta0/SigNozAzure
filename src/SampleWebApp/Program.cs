@@ -1,8 +1,5 @@
-using System.Net;
 using CloudStructures;
-using Microsoft.AspNetCore.Connections;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
@@ -40,6 +37,7 @@ builder.Services.AddOpenTelemetry()
             .AddSource(serviceName)
             .AddAspNetCoreInstrumentation(options => { options.RecordException = true; })
             .AddHttpClientInstrumentation()
+            .AddRedisInstrumentation()
             .AddConsoleExporter()
             .AddOtlpExporter(options => { options.Endpoint = otlpEndpoint; });
         tracing.AddSource(Instrumentation.ActivitySourceName);
