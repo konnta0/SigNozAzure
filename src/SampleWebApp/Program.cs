@@ -29,6 +29,8 @@ builder.Services.AddSingleton<RedisConnection>(_ =>
             { "signoz-azure.redis.cache.windows.net", 6380 }
         }
     }));
+
+    builder.Services.AddSingleton<IConnectionMultiplexer>(_ => connection.GetConnection());
     return connection;
 });
 
@@ -58,17 +60,14 @@ builder.Services.AddOpenTelemetry()
         tracing.AddSource(Instrumentation.ActivitySourceName);
         tracing.AddInstrumentation(new Instrumentation());
 
-        builder.Services.Configure<RedisConnection>(redisConnection =>
+        tracing.AddRedisInstrumentation(static options =>
         {
-            tracing.AddRedisInstrumentation(redisConnection.GetConnection(), static options =>
+            options.FlushInterval = TimeSpan.FromMicroseconds(500);
+            options.SetVerboseDatabaseStatements = true;
+            options.Enrich = (activity, command) =>
             {
-                options.FlushInterval = TimeSpan.FromMicroseconds(500);
-                options.SetVerboseDatabaseStatements = true;
-                options.Enrich = (activity, command) =>
-                {
-                    activity.SetTag("is_fast", command.ElapsedTime < TimeSpan.FromMilliseconds(100));
-                };
-            });
+                activity.SetTag("is_fast", command.ElapsedTime < TimeSpan.FromMilliseconds(100));
+            };
         });
 
     })
