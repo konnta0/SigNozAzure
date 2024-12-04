@@ -36,7 +36,6 @@ const string serviceName = "SampleWebApp";
 const string serviceVersion = "1.0.0";
 var otlpEndpoint = new Uri("http://20.40.96.181:4317");
 
-var redisConnection = builder.Services.BuildServiceProvider().GetRequiredService<RedisConnection>();
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource =>
     {
@@ -54,7 +53,14 @@ builder.Services.AddOpenTelemetry()
             .AddSource(serviceName)
             .AddAspNetCoreInstrumentation(options => { options.RecordException = true; })
             .AddHttpClientInstrumentation()
-            .AddRedisInstrumentation(redisConnection.GetConnection(), static options =>
+            .AddConsoleExporter()
+            .AddOtlpExporter(options => { options.Endpoint = otlpEndpoint; });
+        tracing.AddSource(Instrumentation.ActivitySourceName);
+        tracing.AddInstrumentation(new Instrumentation());
+
+        builder.Services.Configure<RedisConnection>(redisConnection =>
+        {
+            tracing.AddRedisInstrumentation(redisConnection.GetConnection(), static options =>
             {
                 options.FlushInterval = TimeSpan.FromMicroseconds(500);
                 options.SetVerboseDatabaseStatements = true;
@@ -62,11 +68,9 @@ builder.Services.AddOpenTelemetry()
                 {
                     activity.SetTag("is_fast", command.ElapsedTime < TimeSpan.FromMilliseconds(100));
                 };
-            })
-            .AddConsoleExporter()
-            .AddOtlpExporter(options => { options.Endpoint = otlpEndpoint; });
-        tracing.AddSource(Instrumentation.ActivitySourceName);
-        tracing.AddInstrumentation(new Instrumentation());
+            });
+        });
+
     })
     .WithMetrics(metrics => metrics
         .AddMeter(nameof(ApplicationMetrics))
