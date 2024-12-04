@@ -30,8 +30,14 @@ builder.Services.AddSingleton<RedisConnection>(_ =>
         }
     }));
 
-    builder.Services.AddSingleton<IConnectionMultiplexer>(_ => connection.GetConnection());
     return connection;
+});
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(provider =>
+{
+    var redisConnection = provider.GetRequiredService<RedisConnection>();
+
+    return redisConnection.GetConnection();
 });
 
 const string serviceName = "SampleWebApp";
