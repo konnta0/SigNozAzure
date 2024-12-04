@@ -16,10 +16,27 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddSingleton<RedisConnection>(_ =>
+{
+    var pass = Environment.GetEnvironmentVariable("CACHE_PASS_WORD");
+    var connection = new RedisConnection(new RedisConfig("default", new ConfigurationOptions
+    {
+        Password = pass,
+        Ssl = true,
+        AbortOnConnectFail = false,
+        EndPoints = new EndPointCollection
+        {
+            { "signoz-azure.redis.cache.windows.net", 6380 }
+        }
+    }));
+    return connection;
+});
+
 const string serviceName = "SampleWebApp";
 const string serviceVersion = "1.0.0";
 var otlpEndpoint = new Uri("http://20.40.96.181:4317");
 
+var redisConnection = builder.Services.BuildServiceProvider().GetRequiredService<RedisConnection>();
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource =>
     {
@@ -37,7 +54,7 @@ builder.Services.AddOpenTelemetry()
             .AddSource(serviceName)
             .AddAspNetCoreInstrumentation(options => { options.RecordException = true; })
             .AddHttpClientInstrumentation()
-            .AddRedisInstrumentation()
+            .AddRedisInstrumentation(redisConnection.GetConnection())
             .AddConsoleExporter()
             .AddOtlpExporter(options => { options.Endpoint = otlpEndpoint; });
         tracing.AddSource(Instrumentation.ActivitySourceName);
@@ -69,21 +86,6 @@ builder.Services.AddOpenTelemetry()
 
 builder.Services.AddSingleton<Instrumentation>();
 builder.Services.AddSingleton<ApplicationMetrics>();
-builder.Services.AddScoped<RedisConnection>(_ =>
-{
-    var pass = Environment.GetEnvironmentVariable("CACHE_PASS_WORD");
-    var connection = new RedisConnection(new RedisConfig("default", new ConfigurationOptions
-    {
-        Password = pass,
-        Ssl = true,
-        AbortOnConnectFail = false,
-        EndPoints = new EndPointCollection
-        {
-            { "signoz-azure.redis.cache.windows.net", 6380 }
-        }
-    }));
-    return connection;
-});
 builder.Services.AddHttpClient();
 
 builder.Services.AddDbContext<ExampleDbContext>(static x => x.UseSqlServer());
